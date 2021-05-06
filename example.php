@@ -18,4 +18,8 @@ var_dump($l2) and \PHPStan\dumpType($l2);
 
 assert(bind(_return(1, ListMonad::class), $f) == $f(1));
 
+$m = new ListMonad(1);
+$return = Closure::fromCallable('\zonuexe\Mona\_return');
+assert($m->bind($return) == $m);
+
 echo "ok", PHP_EOL;

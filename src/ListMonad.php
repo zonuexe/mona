@@ -27,7 +27,7 @@ class ListMonad implements Monad
      * @param Closure(T):static<T> $f
      * @return static<T>
      */
-    public function bind(Closure $f): Monad
+    public function bind(Closure $f): ListMonad
     {
         return $f($this->v);
     }

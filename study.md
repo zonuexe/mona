@@ -203,3 +203,70 @@ $f = fn(int $n): ListMonad =>_return($n + 1, ListMonad::class);
 ```
 
 モナドに `return` とかいう変な関数名を使う気持ちがようやくわかった。C言語とかの手続き的な `return` っぽい雰囲気に似せるDSL的なやつだったんですね。
+
+## 4. モナド則を満たす (その2)
+
+次です。 `m >>= return` == `m` らしいです。よっしゃ。
+
+```php
+$m = new ListMonad(1);
+$return Closure::fromCallable('\zonuexe\Mona\_return');
+assert($m->bind($return) == $m);
+```
+
+だめです。
+
+```
+PHP Fatal error:  Uncaught ArgumentCountError: Too few arguments to function zonuexe\Mona\_return(), 1 passed in /Users/megurine/repo/php/mona/src/ListMonad.php on line 33 and exactly 2 expected in /Users/megurine/repo/php/mona/src/functions.php:16
+```
+
+そうです。オレオレ `return` は型付けの要請を満たすために2引数関数になっていたのです。しょうがないにゃあ。
+
+```diff
+@@ -13,8 +18,17 @@ use Closure;
+  * @param class-string<M> $monad
+  * @return M<T>
+  */
+-function _return($v, string $monad): Monad
++function _return($v, string $monad = null): Monad
+ {
++    if ($monad === null) {
++        $ref_type = get_caller_type(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]);
++        if ($ref_type === null) {
++            throw new BadFunctionCallException('Please call me from statically typed method');
++        }
++
++        $monad = $ref_type->getName();
++    }
++
+     return new $monad($v);
+ }
+```
+
+PHPならではの邪道感がありますね… `get_caller_type()` はリフレクションを使って、呼び出し元の関数またはメソッドの型を取得します。
+
+再び検証コードを再掲します。
+
+```php
+$m = new ListMonad(1);
+$return Closure::fromCallable('\zonuexe\Mona\_return');
+assert($m->bind($return) == $m);
+```
+
+`_return`は誰が呼ぶのでしょうか？ そうです。 `ListMonad::bind()` です。つまり定義はこのように修正しなければいけません。
+
+```diff
+modified   src/ListMonad.php
+@@ -28,7 +28,7 @@ class ListMonad implements Monad
+      * @param Closure(T):static<T> $f
+      * @return static<T>
+      */
+-    public function bind(Closure $f): Monad
++    public function bind(Closure $f): ListMonad
+     {
+         return $f($this->v);
+     }
+```
+
+ばっちりですね…！
+
