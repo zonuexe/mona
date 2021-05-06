@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace zonuexe\Mona;
 
 use Closure;
-use function zonuexe\Mona\ret;
 
 /**
  * @template T
@@ -19,26 +18,17 @@ class ListMonad implements Monad
     /**
      * @param T $v
      */
-    private function __construct($v)
+    public function __construct($v)
     {
         $this->v = $v;
     }
 
     /**
-     * @param T $v
-     * @return self<T>
-     */
-    public static function new($v): self
-    {
-        return new self($v);
-    }
-
-    /**
-     * @param Closure(T):T $f
-     * @return self<T>
+     * @param Closure(T):static<T> $f
+     * @return static<T>
      */
     public function bind(Closure $f): Monad
     {
-        return ret($f($this->v), ListMonad::class);
+        return $f($this->v);
     }
 }

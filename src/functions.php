@@ -13,9 +13,9 @@ use Closure;
  * @param class-string<M> $monad
  * @return M<T>
  */
-function ret($v, string $monad): Monad
+function _return($v, string $monad): Monad
 {
-    return $monad::new($v);
+    return new $monad($v);
 }
 
 /**

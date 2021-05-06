@@ -23,7 +23,7 @@ namespace zonuexe\Monad;
  */
 function ret($v, string $monad): Monad
 {
-    return $monad::new($v);
+    return new $monad($v);
 }
 ```
 
@@ -39,7 +39,7 @@ interface Monad
      * @param T $v
      * @return Monad<T>
      */
-    public static function new($v): Monad;
+    public function __construct($v): Monad;
 }
 ```
 
@@ -148,4 +148,58 @@ class ListMonad implements Monad
 
 動くじゃん。
 
+## 3. モナド則を満たす (その1)
 
+まず `return x >>= f` == `f x` これを満たすことを確認します。
+
+
+PHP的にはこうなると良いです。
+
+```php
+assert(bind(ret(1, ListMonad::class), $f) == $f(1));
+```
+
+私は勘違いしていました。`$f`の型が間違っています。
+
+```diff
+-$f = fn(int $n) => $n + 1;
++$f = fn(int $n): ListMonad => ret($n + 1, ListMonad::class);
+```
+
+よって `ListMonad::bind()` の実装はこうなります。
+
+```diff
+     /**
+-     * @param Closure(T):T $f
+-     * @return self<T>
++     * @param Closure(T):static<T> $f
++     * @return static<T>
+      */
+     public function bind(Closure $f): Monad
+     {
+-        return ret($f($this->v), ListMonad::class);
++        return $f($this->v);
+```
+
+なんだ、簡単じゃん……。そして、`return` って関数名の意味もわかってきたぞ。わかってきたので `ret` とか中途半端な名前はやめて `_return` にする。
+
+```diff
+modified   src/functions.php
+@@ -13,7 +13,7 @@ use Closure;
+  * @param class-string<M> $monad
+  * @return M<T>
+  */
+-function ret($v, string $monad): Monad
++function _return($v, string $monad): Monad
+ {
+     return new $monad($v);
+ }
+```
+
+するとだな…
+
+```php
+$f = fn(int $n): ListMonad =>_return($n + 1, ListMonad::class);
+```
+
+モナドに `return` とかいう変な関数名を使う気持ちがようやくわかった。C言語とかの手続き的な `return` っぽい雰囲気に似せるDSL的なやつだったんですね。
