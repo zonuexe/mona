@@ -239,6 +239,10 @@ PHP Fatal error:  Uncaught ArgumentCountError: Too few arguments to function zon
 +        $monad = $ref_type->getName();
 +    }
 +
++    if (!is_a($monad, Monad::class, true)) {
++        throw new BadFunctionCallException('Class name $monad must be implements Monad');
++    }
++
      return new $monad($v);
  }
 ```
