@@ -442,3 +442,67 @@ PHPの `iterator_to_array()` が使えるようにこうします。
 ```
 
 やりましたよ。
+
+## 6. リストっぽい手続きを用意する
+
+
+こうしたい。
+
+```php
+var_dump(lst\foldl(
+    fn(int $n, int $m): int => $n + $m,
+    0,
+    ListMonad::list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+));
+
+var_dump(lst\foldr(
+    fn(int $n, int $m): int => $n + $m,
+    0,
+    ListMonad::list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+));
+```
+
+`lst\foldl()` はリストの左側から、 `lst\foldr()` はリストの右側から処理する。われわれの知ってる足し算は順序に依存しないので、どちらも `55` が返れば成功。どっちがいいの？ってやつはぐぐればいろいろ出てくる。PHPだと`array_reduce()`を使うやつ。
+
+`foldl`は脳死で実装。
+
+```php
+/**
+ * @template T
+ * @param Closure(T,T):T $f
+ * @param T $z
+ * @param ListMonad<T> $xs
+ * @return T
+ */
+function foldl(Closure $f, $z, ListMonad $xs)
+{
+    $succ = $z;
+    foreach ($xs as $x) {
+        $succ = $f($succ, $x);
+    }
+
+    return $succ;
+}
+```
+
+`foldr`はメソッドに任せる。
+
+```php
+    /**
+     * @param Closure(T,T):T $f
+     * @param T $z
+     * @return T
+     */
+    public function foldr(Closure $f, $z)
+    {
+        if ($this->car === null) {
+            return $z;
+        }
+
+        return $f($this->car, $this->cdr->foldr($f, $z));
+    }
+```
+
+`$this->car === null` はいままでも定義に何回か出てるけど、空リストかどうか、つまりリストの終端かどうかの判定です。空リストに辿り着くまでは再帰呼び出ししつづけ、底までたどりつくとようやく値を返します。
+
+`foldr`ができれば`join`、つまりPHPの`array_merge()`みたいなやつが実装できそうですが、眠いので後回しにします。

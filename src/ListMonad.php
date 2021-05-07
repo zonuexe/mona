@@ -96,4 +96,18 @@ class ListMonad implements Monad, IteratorAggregate
         yield $this->car;
         yield from $this->cdr;
     }
+
+    /**
+     * @param Closure(T,T):T $f
+     * @param T $z
+     * @return T
+     */
+    public function foldr(Closure $f, $z)
+    {
+        if ($this->car === null) {
+            return $z;
+        }
+
+        return $f($this->car, $this->cdr->foldr($f, $z));
+    }
 }
