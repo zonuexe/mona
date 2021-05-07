@@ -5,22 +5,70 @@ declare(strict_types=1);
 namespace zonuexe\Mona;
 
 use Closure;
+use Generator;
+use IteratorAggregate;
+use function array_reverse;
+use function array_pop;
 
 /**
  * @template T
  * @implements Monad<T>
+ * @implements IteratorAggregate<T>
  */
-class ListMonad implements Monad
+class ListMonad implements Monad, IteratorAggregate
 {
     /** @var T */
-    private $v;
+    private $car;
+    /** @var ListMonad<T> */
+    private $cdr;
+
+    /**
+     * @param T $car
+     * @param ListMonad<T> $cdr
+     */
+    public function __construct($car, ListMonad $cdr = null)
+    {
+        if ($car !== null) {
+            $this->car = $car;
+            $this->cdr = $cdr ?? $this->nil($car);
+        }
+    }
+
+    /**
+     * @param T $vs
+     * @return ListMonad<T>
+     */
+    public static function list(...$vs): ListMonad
+    {
+        $v = array_pop($vs);
+        assert($v !== null);
+        $list = new ListMonad($v);
+        foreach (array_reverse($vs) as $v) {
+            $list = ListMonad::cons($v, $list);
+        }
+
+        return $list;
+    }
 
     /**
      * @param T $v
+     * @param ListMonad<T> $list
+     * @return ListMonad<T>
      */
-    public function __construct($v)
+    public static function cons($v, ListMonad $list): ListMonad
     {
-        $this->v = $v;
+        return new ListMonad($v, $list);
+    }
+
+    /**
+     * @param T $v
+     * @return ListMonad<T>
+     */
+    public static function nil($v): ListMonad
+    {
+        /** @var ListMonad<T> */
+        $list = new ListMonad(null);
+        return $list;
     }
 
     /**
@@ -29,6 +77,23 @@ class ListMonad implements Monad
      */
     public function bind(Closure $f): ListMonad
     {
-        return $f($this->v);
+        if ($this->car === null) {
+            return $this;
+        }
+
+        return $f($this->car);
+    }
+
+    /**
+     * @return Generator<T>
+     */
+    public function getIterator(): Generator
+    {
+        if ($this->car === null) {
+            return;
+        }
+
+        yield $this->car;
+        yield from $this->cdr;
     }
 }

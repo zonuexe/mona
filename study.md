@@ -274,3 +274,171 @@ modified   src/ListMonad.php
 
 ばっちりですね…！
 
+## 5. ListMonadをリストにする
+
+さて、何も考えなくListMonadを定義しはじめたのですが、まだリストっぽい「物を並べる」という能力はありません。物、並べたくないですか……？
+
+物を並べるとき、PHPではarrayを使います。ここでは「リスト」と呼ばれるデータ構造を考えます。「リスト」は配列と同じものを指して呼ぶこともありますが、ここでは単方向リストというデータ構造を作ります。
+
+今回作りたいリストは、以下のように物を列挙できる構造です。
+
+```php
+(1, 2, 3, 4, 5)
+```
+
+リストの作りかたは二要素を保持できるデータ構造の入れ子構造で表現できます。たとえばPHPの配列で表現するとこうです。
+
+```php
+// (1, 2, 3, 4, 5)
+$lst1 = [1, [2, [3, [4, [5, null]]]]];
+```
+
+長さ1以上のリストは玉ねぎのように後続する要素を持っているので、リストの先頭に要素を追加するのはめっちゃ簡単です。
+
+```php
+// (0, 1, 2, 3, 4, 5)
+$lst2 = [0, $lst1];
+```
+
+もちろんPHPの配列はいくつでもデータを格納できますが、あえて2要素しか使わない縛りをするとこうなる、ということです。
+
+では今回の `ListMonad` ではどうすればいいでしょうか。保持するデータを以下のように変えます。
+
+```diff
+ class ListMonad implements Monad
+ {
+     /** @var T */
+-    private $v;
++    private $car;
++    /** @var ListMonad<T> */
++    private $cdr;
++
++    /**
++     * @param T $car
++     * @param ListMonad<T> $cdr
++     */
++    public function __construct($car, ListMonad $cdr = null)
++    {
++        if ($car !== null) {
++            $this->car = $car;
++            $this->cdr = $cdr ?? $this->nil($car);
++        }
+```
+
+いままで `$v` というプロパティにデータを保持していましたが、今回は `$car` と `$cdr` という2要素にデータを持ちます。このCARとCDRという用語にはそんなに意味はないです。Lispではそう呼ばれる、くらいの感じ。
+
+`$this->nil($car)` はリスト終端です。さきほどの配列は `null` を使っていました。`ListMonad::nil()` は定義はこうです。
+
+```php
+    /**
+     * @param T $v
+     * @return ListMonad<T>
+     */
+    public static function nil($v): ListMonad
+    {
+        /** @var ListMonad<T> */
+        $list = new ListMonad(null);
+        return $list;
+    }
+```
+
+`$v` は使ってないのですが、 `ListMonad<int>` のような型を付けるためにダミーで渡しています。
+
+リストは一気に作りたいので、こういうヘルパー的な静的メソッドを作ります。
+
+```php
+    /**
+     * @param T $vs
+     * @return ListMonad<T>
+     */
+    public static function list(...$vs): ListMonad
+    {
+        $v = array_pop($vs);
+        assert($v !== null);
+        $list = new ListMonad($v);
+        foreach (array_reverse($vs) as $v) {
+            $list = ListMonad::cons($v, $list);
+        }
+
+        return $list;
+    }
+
+    /**
+     * @param T $v
+     * @param ListMonad<T> $list
+     * @return ListMonad<T>
+     */
+    public static function cons($v, ListMonad $list): ListMonad
+    {
+        return new ListMonad($v, $list);
+    }
+```
+
+つまり、こう使えるようにします。
+
+```php
+$lst1 = ListMonad::list(1, 2, 3, 4, 5);
+$lst2 = ListMonad::cons(0, $lst1);
+
+var_dump(iterator_to_array($lst1, false));
+var_dump(iterator_to_array($lst2, false));
+```
+
+PHPの `iterator_to_array()` が使えるようにこうします。
+
+```diff
+ namespace zonuexe\Mona;
+ 
+ use Closure;
++use Generator;
++use IteratorAggregate;
++use function array_reverse;
++use function array_pop;
+ 
+ /**
+  * @template T
+  * @implements Monad<T>
++ * @implements IteratorAggregate<T>
+  */
+ class ListMonad implements Monad
+ {
+@@ -78,4 +83,17 @@ class ListMonad implements Monad
+ 
+         return $f($this->car);
+     }
++
++    /**
++     * @return Generator<T>
++     */
++    public function getIterator(): Generator
++    {
++        if ($this->car === null) {
++            return;
++        }
++
++        yield $this->car;
++        yield from $this->cdr;
++    }
+ }
+```
+
+やったあ、これでちゃんとPHPでも使えるリストになったぜ。
+
+……さて、なんで `$this->cdr = null` ではなく `$this->car = $this->nil($v)` にするのでしょうか？
+
+空リストに対する操作もできると便利だからですね。
+
+```diff
+@@ -77,6 +77,10 @@ class ListMonad implements Monad, IteratorAggregate
+      */
+     public function bind(Closure $f): ListMonad
+     {
++        if ($this->car === null) {
++            return $this;
++        }
++
+         return $f($this->car);
+     }
+```
+
+やりましたよ。
