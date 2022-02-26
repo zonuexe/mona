@@ -28,7 +28,7 @@ function foldl(Closure $f, $z, ListMonad $xs)
 
 /**
  * @template T
- * @param Closure(T,ListMonad<T>):T $f
+ * @param Closure(T,T):T $f
  * @param T $z
  * @param ListMonad<T> $xs
  * @return T

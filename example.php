@@ -21,7 +21,7 @@ assert(bind(_return(1, ListMonad::class), $f) == $f(1));
 
 $m = new ListMonad(1);
 $return = Closure::fromCallable('\zonuexe\Mona\_return');
-assert($m->bind($return) == $m);
+assert($m->bind($return) === $m);
 
 var_dump(lst\foldl(
     fn(int $n, int $m): int => $n + $m,

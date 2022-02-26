@@ -44,7 +44,7 @@ function _return($v, string $monad = null): Monad
  * @template T
  * @template M of Monad<T>
  * @param M $m
- * @param Closure(T):T $f
+ * @param Closure(T):M $f
  * @return M<T>
  */
 function bind(Monad $m, Closure $f): Monad
@@ -62,8 +62,8 @@ function get_caller_type(array $backtrace): ?ReflectionNamedType
         $ref_class = new ReflectionClass($backtrace['class']);
         $ref_method = $ref_class->getMethod($backtrace['function']);
         $ref_type = $ref_method->getReturnType();
-    } elseif ($backtrace['function']) {
-        $ref_function = new ReflectionFunction($backtrace['function']);
+    } elseif ($function = ($backtrace['function'] ?? null)) {
+        $ref_function = new ReflectionFunction($function);
         $ref_type = $ref_function->getReturnType();
     }
 
