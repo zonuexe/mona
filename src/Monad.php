@@ -12,8 +12,9 @@ use Closure;
 interface Monad
 {
     /**
-     * @param Closure(T):static<T> $f
-     * @return static<T>
+     * @template T2
+     * @param Closure(T):static<T2> $f
+     * @return static<T2>
      */
     public function bind(Closure $f): Monad;
 }
