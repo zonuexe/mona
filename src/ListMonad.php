@@ -86,6 +86,15 @@ class ListMonad implements Monad, IteratorAggregate
     }
 
     /**
+     * @param T $v
+     * @return static<T>
+     */
+    public static function unit($v): ListMonad
+    {
+        return new ListMonad($v);
+    }
+
+    /**
      * @return Generator<T>
      */
     public function getIterator(): Generator
