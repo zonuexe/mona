@@ -40,9 +40,9 @@ class ListMonad implements Monad, IteratorAggregate
      */
     public static function list(...$vs): ListMonad
     {
-        $v = array_pop($vs);
-        assert($v !== null);
-        $list = new ListMonad($v);
+        /** @var ListMonad<T> $list */
+        $list = ListMonad::nil();
+
         foreach (array_reverse($vs) as $v) {
             $list = ListMonad::cons($v, $list);
         }
@@ -64,7 +64,7 @@ class ListMonad implements Monad, IteratorAggregate
      * @param T $v
      * @return ListMonad<T>
      */
-    public static function nil($v): ListMonad
+    public static function nil($v = null): ListMonad
     {
         /** @var ListMonad<T> */
         $list = new ListMonad(null);
