@@ -1,4 +1,7 @@
 {
+    "name": "zonuexe/mona",
+    "license": "Apache-2.0",
+    "description": "Statically typed Monad implementation.",
     "require": {
         "php": ">=7.4"
     },
