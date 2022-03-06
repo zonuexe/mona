@@ -19,8 +19,9 @@ interface Monad
     public function bind(Closure $f): Monad;
 
     /**
-     * @param T $value
-     * @return static<T>
+     * @template TValue
+     * @param TValue $value
+     * @return static<TValue>
      */
     public static function unit(mixed $value): Monad;
 }

@@ -86,12 +86,13 @@ class ListMonad implements Monad, IteratorAggregate
     }
 
     /**
-     * @param T $v
-     * @return static<T>
+     * @template TValue
+     * @param TValue $value
+     * @return static<TValue>
      */
-    public static function unit($v): ListMonad
+    public static function unit($value): ListMonad
     {
-        return new ListMonad($v);
+        return new ListMonad($value);
     }
 
     /**
