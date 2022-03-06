@@ -8,6 +8,11 @@
             "zonuexe\\Mona\\": "src"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "zonuexe\\Mona\\": "tests"
+        }
+    },
     "require-dev": {
         "phpstan/phpstan": "^1.4",
         "phpunit/phpunit": "^9.5"
