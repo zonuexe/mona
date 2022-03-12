@@ -14,8 +14,9 @@ use zonuexe\Mona\MaybeMonad\Just;
 abstract class MaybeMonad implements Monad
 {
     /**
-     * @param T $value
-     * @return MaybeMonad<T>
+     * @template TValue
+     * @param TValue $value
+     * @return MaybeMonad<TValue>
      */
     public static function unit(mixed $value): self
     {

@@ -13,7 +13,10 @@ use zonuexe\Mona\MaybeMonad;
  */
 final class Nothing extends MaybeMonad
 {
-    public function __construct()
+    /**
+     * @phpstan-param T $value
+     */
+    public function __construct(mixed $value) // @phpstan-ignore-line
     {
     }
 
@@ -25,5 +28,15 @@ final class Nothing extends MaybeMonad
     public function bind(Closure $f): self
     {
         return $this;
+    }
+
+    /**
+     * @template TValue
+     * @param TValue $value
+     * @return Nothing<TValue>
+     */
+    public static function unit(mixed $value): self
+    {
+        return new Nothing($value);
     }
 }
