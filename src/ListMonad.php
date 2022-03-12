@@ -26,7 +26,7 @@ class ListMonad implements Monad, IteratorAggregate
      * @param T $car
      * @param ListMonad<T> $cdr
      */
-    public function __construct($car, ListMonad $cdr = null)
+    final public function __construct($car, ListMonad $cdr = null)
     {
         if ($car !== null) {
             $this->car = $car;
@@ -35,12 +35,23 @@ class ListMonad implements Monad, IteratorAggregate
     }
 
     /**
-     * @param T $vs
-     * @return ListMonad<T>
+     * @return array<string,mixed>
+     */
+    public function __debugInfo(): array
+    {
+        return $this->null()
+            ? ['NIL' => null]
+            : ['car' => $this->car, 'cdr' => $this->cdr];
+    }
+
+    /**
+     * @template TValue
+     * @param TValue $vs
+     * @return ListMonad<TValue>
      */
     public static function list(...$vs): ListMonad
     {
-        /** @var ListMonad<T> $list */
+        /** @var ListMonad<TValue> $list */
         $list = ListMonad::nil();
 
         foreach (array_reverse($vs) as $v) {
@@ -51,9 +62,10 @@ class ListMonad implements Monad, IteratorAggregate
     }
 
     /**
-     * @param T $v
-     * @param ListMonad<T> $list
-     * @return ListMonad<T>
+     * @template TValue
+     * @param TValue $v
+     * @param ListMonad<TValue> $list
+     * @return ListMonad<TValue>
      */
     public static function cons($v, ListMonad $list): ListMonad
     {
@@ -72,17 +84,43 @@ class ListMonad implements Monad, IteratorAggregate
     }
 
     /**
+     * Return true if $this is NIL object (empty list)
+     */
+    public function null(): bool
+    {
+        return $this->car === null;
+    }
+
+    /**
      * @template T2
      * @param Closure(T):static<T2> $f
      * @return static<T2>
      */
     public function bind(Closure $f): ListMonad
     {
-        if ($this->car === null) {
-            return $this;
+        if ($this->null()) {
+            /** @var static<T2> */
+            $nil = self::nil();
+
+            return $nil;
         }
 
-        return $f($this->car);
+        if ($this->cdr->null()) {
+            return $f($this->car);
+        }
+
+        return $f($this->car)->concat($this->cdr->bind($f));
+    }
+
+    /**
+     * @param static<T> $list
+     * @return static<T>
+     */
+    public function concat(ListMonad $list): ListMonad
+    {
+        return $this->null() || $this->cdr->null()
+            ? new static($this->car, $list)
+            : new static($this->car, $this->cdr->concat($list));
     }
 
     /**

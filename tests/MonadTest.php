@@ -14,18 +14,19 @@ use function zonuexe\Mona\_return;
 abstract class MonadTest extends TestCase
 {
     /**
-     * @return TMonad<string>
+     * @return iterable<array{TMonad<string>}>
      */
-    abstract public function getSubject(): Monad;
+    abstract public function monadsProvider(): iterable;
 
     /**
      * Test Monad laws
      *
+     * @dataProvider monadsProvider
+     * @param TMonad<string> $subject
      * @see https://wiki.haskell.org/Monad_laws
      */
-    public function testMonadLaws(): void
+    public function testMonadLaws(Monad $subject): void
     {
-        $subject = $this->getSubject();
         $monad = get_class($subject);
 
         /** @var \Closure(string):TMonad<string> $return */

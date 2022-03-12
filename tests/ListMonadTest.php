@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace zonuexe\Mona;
 
-use function zonuexe\Mona\_return;
-
 /**
  * @extends MonadTest<ListMonad>
  */
 class ListMonadTest extends MonadTest
 {
-    public function getSubject(): Monad
+    public function monadsProvider(): iterable
     {
-        return ListMonad::unit('Monad');
+        /** @var ListMonad<string> */
+        $nil = ListMonad::nil();
+
+        yield 'unit' => [ListMonad::unit('Monad')];
+        yield 'list' => [ListMonad::list('1', '2', '3')];
+        yield 'nil' => [$nil];
     }
 }
